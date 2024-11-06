@@ -21,9 +21,9 @@ export function getFlagsFromArgsList(args: string[]): [string[], CommandFlag] {
             }
 
             flags[arg] = value;
+        } else {
+            nonFlags.push(arg);
         }
-
-        nonFlags.push(arg);
     }
 
     return [nonFlags, flags];

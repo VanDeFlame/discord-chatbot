@@ -3,7 +3,6 @@ import { environment } from '../config/environment';
 import { AdminExecutionsEnum } from '../enums/commands.enum';
 import { shutdownProcess } from '../process/shutdown.process';
 import { spamProcess } from '../process/spam.process';
-import { Logger } from '../services/logger.service';
 import { splitStringBySpacesButPreserveQuotedPhrases } from '../utils/functions/splitStringBySpacesButPreserveQuotedPhrases.function';
 
 export function handleAdminCommands(message: Message) {
@@ -25,7 +24,7 @@ function handleExecutions(msgArgs: string[]) {
             shutdownProcess();
             break;
         case AdminExecutionsEnum.spam:
-            spamProcess(msgArgs).catch(Logger.error);
+            spamProcess(msgArgs);
             break;
         default:
             break;

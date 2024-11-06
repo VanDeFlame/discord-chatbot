@@ -1,36 +1,45 @@
-import { environment } from '../config/environment';
 import { getUserById } from '../discord/actions/getUserById.function';
-import { sendDirectMessageToAnUser } from '../discord/actions/sendDirectMessageToAnUser.function';
-import { Logger } from '../services/logger.service';
+import { SpamService } from '../services/spam.service';
+import { CommandFlag } from '../types/commands.types';
 import { getFlagsFromArgsList } from '../utils/functions/getFlagsFromArgsList.function';
-import { getRandomMessage } from '../utils/functions/getRandomMessage.function';
 
-let intervalId: NodeJS.Timeout | null = null;
-
-export async function spamProcess(args: string[]) {
+export function spamProcess(args: string[]) {
     const [nonFlags, flags] = getFlagsFromArgsList(args);
 
-    if (intervalId) {
-        clearInterval(intervalId);
-        return;
-    }
-    if (nonFlags[0] === 'STOP') {
-        return;
-    }
+    const spamService = SpamService.getInstance();
 
+    switch (nonFlags[0]?.toUpperCase()) {
+        case 'STOP':
+            spamService.stop();
+            break;
+        case 'PAUSE':
+            spamService.stop();
+            break;
+        case 'CLEAR':
+            spamService.clear();
+            break;
+        case 'RESUME':
+            spamService.start();
+            break;
+        case 'START':
+            setPropertiesOnFlags(flags).then(() => spamService.start());
+            break;
+        default:
+            setPropertiesOnFlags(flags);
+            break;
+    }
+}
+
+async function setPropertiesOnFlags(flags: CommandFlag) {
+    const spamService = SpamService.getInstance();
     const userFlag = flags['-u'] ?? flags['--user'];
-    if (!userFlag) return;
+    if (userFlag) {
+        const user = await getUserById(userFlag);
+        if (user) spamService.user = user;
+    }
 
     const messageFlag = flags['-m'] ?? flags['--message'];
-    const timeFlag = Number(flags['-t'] ?? flags['--time']);
-    const intervalTime = isNaN(timeFlag) ? timeFlag * 1000 : environment.INTERVAL;
+    if (messageFlag) spamService.message = messageFlag;
 
-    const intervalUser = await getUserById(userFlag);
-    if (!intervalUser) return;
-
-    intervalId = setInterval(async () => {
-        const intervalMessage = messageFlag ?? getRandomMessage();
-
-        await sendDirectMessageToAnUser(intervalUser, intervalMessage).catch(Logger.error);
-    }, intervalTime);
+    spamService.timeGapSeconds = Number(flags['-t'] ?? flags['--time']);
 }
